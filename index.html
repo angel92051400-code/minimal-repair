@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 助教批改輔助系統 - 最小修復評量工作台 (秒改極速版)</title>
+    <title>AI 助教批改輔助系統 - 智慧最小修復工作台</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -67,12 +67,45 @@
         }
     </style>
 </head>
-<body class="min-h-screen bg-[#0b0f17] text-slate-100 p-3 md:p-6 flex flex-col justify-between">
+<body class="min-h-screen bg-[#0b0f17] text-slate-100 p-3 md:p-6 flex flex-col justify-between relative">
 
+    <!-- 首次登入 API Key 遮罩彈窗 -->
+    <div id="apiKeyModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 transition-all duration-300">
+        <div class="bg-[#121822] border border-borderMuted rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div class="flex items-center space-x-3 border-b border-borderMuted pb-3">
+                <span class="p-2 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 0121 9z"/>
+                    </svg>
+                </span>
+                <div>
+                    <h2 class="text-base font-bold text-white">啟動 AI 批改系統</h2>
+                    <p class="text-xs text-slate-400">請先設定您的 Gemini API 金鑰以繼續</p>
+                </div>
+            </div>
+
+            <p class="text-xs text-slate-300 leading-relaxed">
+                本系統採用 Google Gemini AI 進行「最小修復」診斷與語法、符號糾正。請貼入您的 API Key（儲存後自動記憶在瀏覽器，下次開啟免再輸入）。
+            </p>
+
+            <div class="space-y-1.5">
+                <label class="text-xs text-slate-400 font-medium">Gemini API Key：</label>
+                <input type="password" id="modalApiKeyInput" placeholder="請貼上 AI Studio 取得的 API Key" 
+                    class="w-full bg-[#090d13] border border-borderMuted rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono">
+            </div>
+
+            <button type="button" onclick="confirmApiKeyModal()" 
+                class="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium py-2 rounded-lg text-xs transition shadow-lg shadow-blue-600/20">
+                確認並正式開啟工作台
+            </button>
+        </div>
+    </div>
+
+    <!-- 頂部導覽列 -->
     <header class="max-w-7xl mx-auto w-full mb-4">
         <div class="flex flex-wrap items-center justify-between gap-3 border-b border-borderMuted/60 pb-3">
             <div class="flex items-center space-x-3">
-                <span class="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                <span class="p-2 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
@@ -80,33 +113,36 @@
                 <div>
                     <h1 class="text-base md:text-lg font-bold tracking-tight text-white flex items-center gap-2">
                         Python 程式批改輔助系統
-                        <span class="text-xs px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono font-medium">⚡ 0秒本地秒改引擎</span>
+                        <span class="text-xs px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30 font-mono font-medium">Gemini AI 閱讀引擎</span>
                     </h1>
-                    <p class="text-xs text-slate-400">免填 API Key・極速規則比對・即時標記錯誤與評語生成</p>
+                    <p class="text-xs text-slate-400">深度解析題目與邏輯・自動糾正算術與符號謬誤・秒速生成評語</p>
                 </div>
             </div>
 
-            <div class="flex items-center gap-2 text-xs text-emerald-400 bg-emerald-950/40 border border-emerald-800/60 px-3 py-1.5 rounded-lg">
-                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span>系統就緒：完全免聯網、秒速響應</span>
+            <div class="flex items-center gap-2 text-xs">
+                <button type="button" onclick="openKeyModal()" class="flex items-center gap-2 bg-[#0d131e] hover:bg-[#161e2e] border border-borderMuted px-3 py-1.5 rounded-lg text-slate-300 transition">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span>API Key 狀態：<span id="keyStatusText" class="text-emerald-400 font-mono">已就緒</span></span>
+                    <span class="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded ml-1">重設</span>
+                </button>
             </div>
         </div>
 
         <div class="flex items-center flex-wrap gap-2 text-xs pt-3">
             <span class="text-slate-400 font-medium">快速載入典型學生錯誤案例：</span>
-            <button type="button" onclick="loadPreset('prime_modulo_error')" class="px-2.5 py-1 rounded-md bg-amber-950/60 hover:bg-amber-900/60 text-amber-300 border border-amber-800 transition">
-                案例 1: 質數判斷 (餘數誤寫 == 1)
+            <button type="button" onclick="loadPreset('operator_error')" class="px-2.5 py-1 rounded-md bg-amber-950/60 hover:bg-amber-900/60 text-amber-300 border border-amber-800 transition">
+                案例 1: 符號誤植 (+ 錯改成 -)
             </button>
-            <button type="button" onclick="loadPreset('tree_missing_print')" class="px-2.5 py-1 rounded-md bg-blue-950/60 hover:bg-blue-900/60 text-blue-300 border border-blue-800 transition">
-                案例 2: 聖誕樹 (缺少 print)
+            <button type="button" onclick="loadPreset('prime_modulo_error')" class="px-2.5 py-1 rounded-md bg-blue-950/60 hover:bg-blue-900/60 text-blue-300 border border-blue-800 transition">
+                案例 2: 質數判斷 (餘數 == 1)
             </button>
-            <button type="button" onclick="loadPreset('missing_loop')" class="px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
-                案例 3: 平方和 (缺少迴圈結構)
+            <button type="button" onclick="loadPreset('tree_missing_print')" class="px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+                案例 3: 聖誕樹 (缺少 print)
             </button>
         </div>
     </header>
 
-    <!-- Main Content Area -->
+    <!-- 主工作區 -->
     <main class="max-w-7xl mx-auto w-full flex-1 flex flex-col gap-4">
 
         <section class="bg-panelBg/90 border border-borderMuted rounded-xl p-4 shadow-lg backdrop-blur-sm">
@@ -117,38 +153,43 @@
                     </svg>
                     題目說明與評量規範 (Problem Prompt):
                 </label>
-                <span class="text-xs text-slate-400">助教可輸入當週作業題目或評分規範</span>
+                <span class="text-xs text-slate-400">AI 將依據此題目脈絡進行邏輯與算術糾正</span>
             </div>
             <textarea id="problemPrompt" rows="2" 
                 class="w-full bg-[#0d131e] text-slate-200 border border-borderMuted rounded-lg p-3 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 font-sans resize-none"
-                placeholder="輸入題目要求與核心條件...">請撰寫一函式 sum_squares(n)，計算並回傳 1 到 n 所有整數的平方和 (1^2 + 2^2 + ... + n^2)。【要求】：必須使用迴圈結構 (for 或 while) 進行累加。</textarea>
+                placeholder="輸入題目要求與核心條件...">請撰寫一函式 sum_squares(n)，計算並回傳 1 到 n 所有整數的平方和 (1^2 + 2^2 + ... + n^2)。必須正確累加。</textarea>
         </section>
 
         <section class="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 min-w-0">
             
-            <!-- Left Column: Student Code Editor -->
+            <!-- 左欄：學生程式碼編輯器 -->
             <div class="flex flex-col bg-panelBg/90 border border-borderMuted rounded-xl p-3 md:p-4 shadow-lg backdrop-blur-sm min-w-0">
                 <div class="h-8 flex items-center justify-between mb-2">
                     <label for="studentCode" class="text-xs md:text-sm font-semibold text-slate-200 flex items-center gap-2 truncate">
                         <span class="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0"></span>
-                        <span class="truncate">學生程式碼 Student Code (貼上即秒改):</span>
+                        <span class="truncate">學生程式碼 Student Code (貼上即自動解析):</span>
                     </label>
-                    <button type="button" onclick="clearStudentCode()" class="text-xs px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-red-400 border border-slate-700 transition flex items-center gap-1">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                        清空
-                    </button>
+                    <div class="flex items-center gap-2">
+                        <span id="typingIndicator" class="text-[11px] text-blue-400 font-mono hidden">AI 思考中...</span>
+                        <button type="button" onclick="clearStudentCode()" class="text-xs px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-red-400 border border-slate-700 transition flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                            清空
+                        </button>
+                    </div>
                 </div>
 
                 <div class="flex-1 min-h-[260px] md:min-h-[320px] flex">
                     <textarea id="studentCode" spellcheck="false"
                         class="code-sync w-full h-full bg-[#0a0f18] text-slate-200 border border-borderMuted rounded-lg p-3 focus:outline-none focus:ring-1 focus:ring-amber-500/75 resize-none transition"
-                        placeholder="請在此貼上學生提交的 Python 原始程式碼...">def sum_squares(n):
-    total = n * n
+                        placeholder="請在此貼上學生提交的 Python 程式碼...">def sum_squares(n):
+    total = 0
+    for i in range(1, n + 1):
+        total -= i * i  # 學生誤將 + 寫成 -
     return total</textarea>
                 </div>
             </div>
 
-            <!-- Right Column: Minimal Repair Reference Answer -->
+            <!-- 右欄：Minimal Repair 最小修復區 -->
             <div class="flex flex-col bg-panelBg/90 border border-borderMuted rounded-xl p-3 md:p-4 shadow-lg backdrop-blur-sm min-w-0">
                 <div class="h-8 flex items-center justify-between mb-2">
                     <div class="flex items-center gap-2 min-w-0">
@@ -156,7 +197,7 @@
                         <h2 class="text-xs md:text-sm font-semibold text-slate-200 truncate">
                             Minimal Repair (最小修復對照)
                         </h2>
-                        <span id="repairStatusBadge" class="text-[11px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono border border-emerald-500/30 shrink-0">⚡ 0秒秒改就緒</span>
+                        <span id="repairStatusBadge" class="text-[11px] px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 font-mono border border-blue-500/30 shrink-0">準備就緒</span>
                     </div>
                     
                     <button type="button" onclick="copyRepairedCode()" id="copyCodeBtn"
@@ -172,7 +213,7 @@
                     <div id="repairedCodeView" class="code-sync text-slate-200 overflow-auto flex-1"></div>
                     
                     <div class="mt-2 pt-2 border-t border-borderMuted/40 flex items-center justify-between text-[11px] text-slate-500">
-                        <span class="truncate">本地端光速規則引擎比對</span>
+                        <span class="truncate">保留原變數命名與邏輯結構之最小修復</span>
                         <span id="diffStats" class="font-mono text-slate-400 shrink-0 ml-1">0 處修復</span>
                     </div>
                 </div>
@@ -219,6 +260,10 @@
 
     <script>
         const PRESETS = {
+            operator_error: {
+                prompt: "請撰寫一函式 sum_squares(n)，計算並回傳 1 到 n 所有整數的平方和 (1^2 + 2^2 + ... + n^2)。必須正確累加。",
+                student: `def sum_squares(n):\n    total = 0\n    for i in range(1, n + 1):\n        total -= i * i  # 學生誤將 + 寫成 -\n    return total`
+            },
             prime_modulo_error: {
                 prompt: "寫一個程式印出 100 以內的所有質數 (Prime Numbers)。",
                 student: `primes = []\n\nfor num in range(2, 100):\n    is_prime = True\n    for i in range(2, int(num**0.5) + 1):\n        if num % i == 1:\n            is_prime = False\n            break\n    if is_prime:\n        primes.append(num)\n\nprint(primes)`
@@ -226,26 +271,70 @@
             tree_missing_print: {
                 prompt: "請用字元 '*' 印出一個 5 層的聖誕樹圖案。",
                 student: `layers = 5  # 定義樹的層數\n\nfor i in range(1, layers + 1):\n    spaces = ' ' * (layers - i)\n    stars = '*' * (2 * i - 1)`
-            },
-            missing_loop: {
-                prompt: "請撰寫一函式 sum_squares(n)，計算並回傳 1 到 n 所有整數的平方和 (1^2 + 2^2 + ... + n^2)。【要求】：必須使用迴圈結構 (for 或 while) 進行累加。",
-                student: `def sum_squares(n):\n    total = n * n\n    return total`
             }
         };
 
         const studentCodeEl = document.getElementById('studentCode');
         const repairedCodeViewEl = document.getElementById('repairedCodeView');
         const feedbackTextEl = document.getElementById('feedbackText');
+        const problemPromptEl = document.getElementById('problemPrompt');
+        const typingIndicator = document.getElementById('typingIndicator');
+        const apiKeyModal = document.getElementById('apiKeyModal');
+        const modalApiKeyInput = document.getElementById('modalApiKeyInput');
+        const keyStatusText = document.getElementById('keyStatusText');
+
         let latestRepairedRawCode = "";
 
+        // 頁面載入時檢查是否有 API Key
         window.addEventListener('DOMContentLoaded', () => {
-            runInstantEngine();
+            const savedKey = localStorage.getItem('gemini_api_key');
+            if (savedKey) {
+                apiKeyModal.classList.add('hidden');
+                keyStatusText.textContent = "已就緒";
+                runAiAnalysis();
+            } else {
+                apiKeyModal.classList.remove('hidden');
+                keyStatusText.textContent = "未設定";
+            }
         });
 
-        // 核心：0 秒本地光速規則引擎
-        function runInstantEngine() {
+        function openKeyModal() {
+            modalApiKeyInput.value = localStorage.getItem('gemini_api_key') || "";
+            apiKeyModal.classList.remove('hidden');
+        }
+
+        function confirmApiKeyModal() {
+            const key = modalApiKeyInput.value.trim();
+            if (!key) {
+                alert("請填入有效的 Gemini API Key！");
+                return;
+            }
+            localStorage.setItem('gemini_api_key', key);
+            apiKeyModal.classList.add('hidden');
+            keyStatusText.textContent = "已就緒";
+            showToast("API Key 已儲存至瀏覽器！");
+            runAiAnalysis();
+        }
+
+        let debounceTimer;
+        studentCodeEl.addEventListener('input', () => {
+            typingIndicator.classList.remove('hidden');
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                runAiAnalysis();
+            }, 600);
+        });
+
+        async function runAiAnalysis() {
+            const apiKey = localStorage.getItem('gemini_api_key');
+            if (!apiKey) {
+                openKeyModal();
+                return;
+            }
+
             const rawCode = studentCodeEl.value;
             const trimmed = rawCode.trim();
+            const promptText = problemPromptEl ? problemPromptEl.value : "";
 
             if (!trimmed) {
                 latestRepairedRawCode = "";
@@ -253,48 +342,73 @@
                 feedbackTextEl.value = "尚未輸入代碼。";
                 updateStatusBadge("待輸入", "text-[11px] px-2 py-0.5 rounded bg-slate-800 text-slate-400 font-mono border border-slate-700");
                 document.getElementById('diffStats').textContent = "0 處修復";
+                typingIndicator.classList.add('hidden');
                 return;
             }
 
-            // 規則 1：質數判斷餘數誤寫為 == 1
-            if (rawCode.includes('%') && rawCode.includes('== 1')) {
-                const repaired = rawCode.replace(/==\s*1/g, '== 0');
-                applyRepairResult(
-                    repaired,
-                    "整除餘數判斷錯誤 (-3分)",
-                    "將 == 1 改為 == 0 (1 處修復)",
-                    "【扣分原因】：因數整除條件應為餘數為 0 (`num % i == 0`)，原程式誤寫為 `== 1`。只需將 1 改為 0 即可正確過濾質數。"
-                );
-            } 
-            // 規則 2：聖誕樹缺少 print 輸出
-            else if (rawCode.includes('stars =') && !rawCode.includes('print(')) {
-                const repaired = rawCode + "\n    print(spaces + stars)";
-                applyRepairResult(
-                    repaired,
-                    "迴圈缺少輸出語句 (-2分)",
-                    "新增 1 行 print(spaces + stars)",
-                    "【扣分原因】：迴圈內已組裝好空格與星號字串，但缺少 `print()` 輸出，導致畫面上沒有印出樹狀圖。"
-                );
-            } 
-            // 規則 3：缺少迴圈結構
-            else if (rawCode.includes('def sum_squares') && !rawCode.includes('for') && !rawCode.includes('while')) {
-                const repaired = `def sum_squares(n):\n    total = 0\n    for i in range(1, n + 1):\n        total += i * i\n    return total`;
-                applyRepairResult(
-                    repaired,
-                    "未依要求使用迴圈 (-10分)",
-                    "加入 for 迴圈逐一累加 (3 行修復)",
-                    "【扣分原因】：題目要求必須使用迴圈結構進行累加，原程式僅計算 `n * n`，未做 1 到 n 的連續平方累加。"
-                );
-            } 
-            // 預設：邏輯正確
-            else {
-                applyRepairResult(
-                    rawCode,
-                    "程式邏輯完整 (滿分)",
-                    "0 處變動",
-                    "【評語】：語法與邏輯正確，符合題目規範要求。"
-                );
+            updateStatusBadge("AI 閱讀分析中...", "text-[11px] px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 font-mono border border-blue-500/30 animate-pulse");
+
+            try {
+                const result = await callGeminiEngine(apiKey, promptText, rawCode);
+                applyRepairResult(result.repairedCode, result.status, result.stats, result.feedback);
+            } catch (err) {
+                console.error("AI 檢測錯誤:", err);
+                updateStatusBadge("Key 無效或錯誤", "text-[11px] px-2 py-0.5 rounded bg-red-500/20 text-red-300 font-mono border border-red-500/30");
+                feedbackTextEl.value = "AI 呼叫失敗，請點擊右上角重設 API Key。";
+            } finally {
+                typingIndicator.classList.add('hidden');
             }
+        }
+
+        async function callGeminiEngine(apiKey, problemPrompt, studentCode) {
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
+
+            const systemPrompt = `你是一位專業且極度精準的 Python 程式設計課助教。
+請根據「題目要求與規範」閱讀學生的程式碼，並執行「最小修復（Minimal Repair）」：
+1. 嚴格理解題意，找出任何邏輯、算術符號（如將 + 誤寫成 -）或語法錯誤並加以修正。
+2. 絕對保留學生原本的變數名稱與程式架構，只做最小幅度的必要修改。
+3. feedback 必須是一至兩句簡潔客觀的白話說明（例如指出符號寫錯或累加方向錯誤），方便助教複製。`;
+
+            const userPrompt = `【題目要求與規範】：
+${problemPrompt}
+
+【學生提交的原始程式碼】：
+${studentCode}
+
+請回傳嚴格的 JSON 格式（不要使用 markdown codeblock），包含以下四個欄位：
+- "repairedCode": 修復後的完整 Python 程式碼。
+- "status": 簡短扣分或狀態標籤（例如 "運算符號誤植 (-3分)"）。
+- "stats": 修改幅度統計（例如 "將 -= 改為 += (1 處修復)"）。
+- "feedback": 白話繁體中文錯因評語。`;
+
+            const payload = {
+                contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "OBJECT",
+                        properties: {
+                            "repairedCode": { "type": "STRING" },
+                            "status": { "type": "STRING" },
+                            "stats": { "type": "STRING" },
+                            "feedback": { "type": "STRING" }
+                        },
+                        required: ["repairedCode", "status", "stats", "feedback"]
+                    }
+                }
+            };
+
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const result = await response.json();
+            const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+            return JSON.parse(text);
         }
 
         function renderDiffHighlight(originalCode, repairedCode) {
@@ -331,11 +445,7 @@
             }
 
             const htmlLines = repLines.map((line, idx) => {
-                const escapedLine = line
-                    .replace(/&/g, '&amp;')
-                    .replace(/</g, '&lt;')
-                    .replace(/>/g, '&gt;') || '&nbsp;';
-
+                const escapedLine = line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') || '&nbsp;';
                 if (isRepairedLineModified[idx]) {
                     return `<div class="bg-[#3d161a]/90 text-[#f87171] font-semibold px-1 rounded-sm border-l-2 border-red-500">${escapedLine}</div>`;
                 } else {
@@ -361,9 +471,9 @@
             document.getElementById('diffStats').textContent = statsText;
 
             let badgeClass = "text-[11px] px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 font-mono border border-blue-500/30 shrink-0";
-            if (statusBadge.includes('滿分')) {
+            if (statusBadge.includes('滿分') || statusBadge.includes('正確')) {
                 badgeClass = "text-[11px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono border border-emerald-500/30 shrink-0";
-            } else if (statusBadge.includes('-') || statusBadge.includes('錯誤')) {
+            } else if (statusBadge.includes('-') || statusBadge.includes('誤') || statusBadge.includes('錯')) {
                 badgeClass = "text-[11px] px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono border border-amber-500/30 shrink-0";
             }
             updateStatusBadge(statusBadge, badgeClass);
@@ -372,24 +482,17 @@
         function loadPreset(presetKey) {
             const p = PRESETS[presetKey];
             if (!p) return;
-            if (p.prompt && document.getElementById('problemPrompt')) {
-                document.getElementById('problemPrompt').value = p.prompt;
-            }
+            if (p.prompt && problemPromptEl) problemPromptEl.value = p.prompt;
             studentCodeEl.value = p.student;
-            runInstantEngine();
-            showToast("已光速載入案例！");
+            runAiAnalysis();
+            showToast("已載入預設案例！");
         }
 
         function clearStudentCode() {
             studentCodeEl.value = "";
-            runInstantEngine();
+            runAiAnalysis();
             studentCodeEl.focus();
         }
-
-        // 只要一打字或一貼上，0秒瞬間反應
-        studentCodeEl.addEventListener('input', () => {
-            runInstantEngine();
-        });
 
         function copyRepairedCode() {
             executeCopy(latestRepairedRawCode || repairedCodeViewEl.textContent, "已複製修復程式碼！");
