@@ -85,7 +85,7 @@
             </div>
 
             <p class="text-xs text-slate-300 leading-relaxed">
-                本系統採用 Google Gemini AI 進行「最小修復」診斷與語法、符號糾正。請貼入您的 API Key（儲存後自動記憶在瀏覽器，下次開啟免再輸入）。
+                本系統採用 Google Gemini 最新 AI 模型進行「最小修復」診斷。請貼入您的 API Key（儲存後自動記憶在瀏覽器，下次開啟免再輸入）。
             </p>
 
             <div class="space-y-1.5">
@@ -113,7 +113,7 @@
                 <div>
                     <h1 class="text-base md:text-lg font-bold tracking-tight text-white flex items-center gap-2">
                         Python 程式批改輔助系統
-                        <span class="text-xs px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30 font-mono font-medium">Gemini AI 閱讀引擎</span>
+                        <span class="text-xs px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30 font-mono font-medium">Gemini AI 最新版引擎</span>
                     </h1>
                     <p class="text-xs text-slate-400">深度解析題目與邏輯・自動糾正算術與符號謬誤・秒速生成評語</p>
                 </div>
@@ -285,7 +285,6 @@
 
         let latestRepairedRawCode = "";
 
-        // 頁面載入時檢查是否有 API Key
         window.addEventListener('DOMContentLoaded', () => {
             const savedKey = localStorage.getItem('gemini_api_key');
             if (savedKey) {
@@ -353,14 +352,15 @@
                 applyRepairResult(result.repairedCode, result.status, result.stats, result.feedback);
             } catch (err) {
                 console.error("AI 檢測錯誤:", err);
-                updateStatusBadge("Key 無效或錯誤", "text-[11px] px-2 py-0.5 rounded bg-red-500/20 text-red-300 font-mono border border-red-500/30");
-                feedbackTextEl.value = "AI 呼叫失敗，請點擊右上角重設 API Key。";
+                updateStatusBadge("連線或呼叫異常", "text-[11px] px-2 py-0.5 rounded bg-red-500/20 text-red-300 font-mono border border-red-500/30");
+                feedbackTextEl.value = "AI 呼叫失敗，請點擊右上角重設 API Key 或檢查網路。";
             } finally {
                 typingIndicator.classList.add('hidden');
             }
         }
 
         async function callGeminiEngine(apiKey, problemPrompt, studentCode) {
+            // 使用您原本確認可以使用的最新穩定版端點
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
 
             const systemPrompt = `你是一位專業且極度精準的 Python 程式設計課助教。
@@ -401,7 +401,9 @@ ${studentCode}
 
             const response = await fetch(apiUrl, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify(payload)
             });
 
