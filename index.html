@@ -119,7 +119,7 @@
 
         // 範例資料
         const samples = {
-            1: `x = 10\nif x > 5\n    print("Greater")`,
+            1: `x = 10\nif x > 5:\n    print("Greater")`,
             2: `layers = 5  # 定義樹的層數\n\nfor i in range(1, layers + 1):\n    spaces = ' ' * (layers - i)\n    stars = '*' * (2 * i + 1)`
         };
 
@@ -163,7 +163,7 @@ ${code}
 2. "feedback": 白話繁體中文評語（說明扣分原因與修復了什麼，例如缺少 print 或冒號）。`;
 
             try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
