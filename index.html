@@ -218,7 +218,7 @@
             document.getElementById('repairStatusBadge').className = "text-[10px] px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 font-mono animate-pulse";
 
             try {
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
                 const systemPrompt = `你是一位專業且精準的 Python 助教。請針對學生的程式碼與題目規範執行「最小修復（Minimal Repair）」：
 1. 找出邏輯、算術符號（如 + 寫成 -）或語法錯誤並修正。
 2. 保留原變數名稱與架構。
