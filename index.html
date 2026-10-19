@@ -40,7 +40,7 @@
                 <div>
                     <h1 class="text-base md:text-lg font-bold tracking-tight text-white flex items-center gap-2">
                         Python 程式批改輔助系統
-                        <span class="text-xs px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30 font-mono">Gemini 3.8 Flash</span>
+                        <span id="engineBadge" class="text-xs px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 font-mono">離線/純前端檢視模式</span>
                     </h1>
                     <p class="text-xs text-slate-400">動態解析題目・算術與符號糾正・Minimal Repair 最小修復</p>
                 </div>
@@ -49,7 +49,7 @@
             <!-- 右上角 API Key 控制區 -->
             <div class="flex items-center gap-2 bg-[#121822] border border-borderMuted p-1.5 rounded-xl shadow-md">
                 <span class="text-xs text-slate-400 pl-2 font-medium">🔑 API Key:</span>
-                <input type="password" id="apiKeyInput" placeholder="請貼上 API Key..." autocomplete="off"
+                <input type="password" id="apiKeyInput" placeholder="留空則為離線模式..." autocomplete="off"
                     class="w-40 md:w-56 bg-[#090d13] border border-borderMuted rounded-lg px-2.5 py-1 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono">
                 <button type="button" onclick="saveApiKey()" 
                     class="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-medium transition cursor-pointer shadow">
@@ -86,7 +86,7 @@
                     <label for="studentCode" class="text-xs md:text-sm font-semibold text-slate-200 flex items-center gap-2">
                         <span class="w-2 h-2 rounded-full bg-amber-400"></span> 學生程式碼 (貼上即自動解析):
                     </label>
-                    <span id="typingIndicator" class="text-[11px] text-blue-400 font-mono hidden">AI 思考中...</span>
+                    <span id="typingIndicator" class="text-[11px] text-blue-400 font-mono hidden">處理中...</span>
                 </div>
                 <div class="flex-1 min-h-[280px] flex">
                     <textarea id="studentCode" spellcheck="false"
@@ -105,19 +105,19 @@
                     <div class="flex items-center gap-2">
                         <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
                         <h2 class="text-xs md:text-sm font-semibold text-slate-200">Minimal Repair (最小修復對照)</h2>
-                        <span id="repairStatusBadge" class="text-[10px] px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 font-mono">準備就緒</span>
+                        <span id="repairStatusBadge" class="text-[10px] px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono">離線檢視中</span>
                     </div>
                     
                     <button type="button" onclick="copyRepairedCode()" class="text-xs px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 cursor-pointer">
-                        📋 複製修復代碼
+                        📋 複製代碼
                     </button>
                 </div>
 
                 <div class="flex-1 min-h-[280px] flex flex-col justify-between bg-[#0a0f18] border border-borderMuted rounded-lg p-3 overflow-hidden">
                     <div id="repairedCodeView" class="code-sync text-slate-200 overflow-auto flex-1"></div>
                     <div class="mt-2 pt-2 border-t border-borderMuted/40 flex items-center justify-between text-[11px] text-slate-500">
-                        <span>保留原架構之最小修復</span>
-                        <span id="diffStats" class="font-mono text-slate-400">0 處修復</span>
+                        <span id="diffFooterHint">未啟用 AI，僅顯示原始碼比對</span>
+                        <span id="diffStats" class="font-mono text-slate-400">0 處差異</span>
                     </div>
                 </div>
             </div>
@@ -168,6 +168,7 @@
         const feedbackTextEl = document.getElementById('feedbackText');
         const problemPromptEl = document.getElementById('problemPrompt');
         const typingIndicator = document.getElementById('typingIndicator');
+        const engineBadge = document.getElementById('engineBadge');
 
         let latestRepairedRawCode = "";
 
@@ -175,37 +176,38 @@
             const savedKey = localStorage.getItem('gemini_api_key');
             if (savedKey) {
                 apiKeyInput.value = savedKey;
-                runAiAnalysis();
             }
+            runAnalysis();
         });
 
         function saveApiKey() {
             const key = apiKeyInput.value.trim();
-            if (!key) {
-                alert("請輸入有效的 API Key！");
-                apiKeyInput.focus();
-                return;
+            if (key) {
+                localStorage.setItem('gemini_api_key', key);
+                showToast("API Key 儲存成功！已啟用 AI 引擎");
+            } else {
+                localStorage.removeItem('gemini_api_key');
+                showToast("已切換為離線純文字檢視模式");
             }
-            localStorage.setItem('gemini_api_key', key);
-            showToast("API Key 儲存成功！");
-            runAiAnalysis();
+            runAnalysis();
         }
 
         let debounceTimer;
         studentCodeEl.addEventListener('input', () => {
             typingIndicator.classList.remove('hidden');
             clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => runAiAnalysis(), 600);
+            debounceTimer = setTimeout(() => runAnalysis(), 500);
         });
 
-        async function runAiAnalysis() {
-            const apiKey = localStorage.getItem('gemini_api_key') || apiKeyInput.value.trim();
-            if (!apiKey) {
-                repairedCodeViewEl.innerHTML = '<span class="text-amber-400"># 請先在右上角輸入並儲存 Gemini API Key...</span>';
-                return;
-            }
+        problemPromptEl.addEventListener('input', () => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => runAnalysis(), 500);
+        });
 
+        async function runAnalysis() {
+            const apiKey = localStorage.getItem('gemini_api_key') || apiKeyInput.value.trim();
             const rawCode = studentCodeEl.value;
+
             if (!rawCode.trim()) {
                 latestRepairedRawCode = "";
                 repairedCodeViewEl.innerHTML = '<span class="text-slate-500"># 請輸入學生代碼...</span>';
@@ -214,6 +216,25 @@
                 return;
             }
 
+            // 如果沒有填寫 API Key，直接執行「純前端離線檢視模式」
+            if (!apiKey) {
+                engineBadge.textContent = "離線/純前端檢視模式";
+                engineBadge.className = "text-xs px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 font-mono";
+                
+                document.getElementById('repairStatusBadge').textContent = "純檢視模式";
+                document.getElementById('repairStatusBadge').className = "text-[10px] px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono";
+                document.getElementById('diffFooterHint').textContent = "未設定 API Key (僅呈現原代碼)";
+                
+                latestRepairedRawCode = rawCode;
+                repairedCodeViewEl.innerHTML = rawCode.split('\n').map(l => `<div class="px-1 text-slate-300">${l.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') || '&nbsp;'}</div>`).join('');
+                feedbackTextEl.value = "【提示】：目前為離線檢視模式（未填寫 API Key）。您可以檢視學生的代碼與排版，若需 AI 自動修復與錯因分析，請於右上角填入並儲存 Gemini API Key。";
+                typingIndicator.classList.add('hidden');
+                return;
+            }
+
+            // 有 API Key，嘗試呼叫 AI
+            engineBadge.textContent = "Gemini AI 引擎";
+            engineBadge.className = "text-xs px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30 font-mono";
             document.getElementById('repairStatusBadge').textContent = "AI 閱讀中...";
             document.getElementById('repairStatusBadge').className = "text-[10px] px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 font-mono animate-pulse";
 
@@ -232,7 +253,7 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        contents: [{ role: "user", parts: [{ text: `【題目】：\n${problemPrompt.value}\n\n【學生代碼】：\n${rawCode}` }] }],
+                        contents: [{ role: "user", parts: [{ text: `【題目】：\n${problemPromptEl.value}\n\n【學生代碼】：\n${rawCode}` }] }],
                         systemInstruction: { parts: [{ text: systemPrompt }] },
                         generationConfig: { temperature: 0.1 }
                     })
@@ -240,7 +261,11 @@
 
                 if (!response.ok) {
                     const errJson = await response.json().catch(() => ({}));
-                    throw new Error(errJson.error?.message || `HTTP ${response.status}`);
+                    const errMsg = errJson.error?.message || `HTTP ${response.status}`;
+                    if (errMsg.includes("Quota exceeded") || errMsg.includes("rate limit")) {
+                        throw new Error("API 額度已達上限（Quota Exceeded），已自動降級為純文字檢視模式。");
+                    }
+                    throw new Error(errMsg);
                 }
 
                 const data = await response.json();
@@ -252,14 +277,21 @@
                 renderDiff(rawCode, result.repairedCode);
                 feedbackTextEl.value = result.feedback;
                 document.getElementById('diffStats').textContent = result.stats;
+                document.getElementById('diffFooterHint').textContent = "保留原架構之最小修復";
                 document.getElementById('repairStatusBadge').textContent = result.status;
                 document.getElementById('repairStatusBadge').className = "text-[10px] px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono";
 
             } catch (err) {
-                console.error(err);
-                document.getElementById('repairStatusBadge').textContent = "呼叫失敗";
+                console.warn("AI 呼叫失敗，自動降級為離線模式:", err.message);
+                
+                // 自動降級為離線檢視，並在評語區明確提示
+                latestRepairedRawCode = rawCode;
+                repairedCodeViewEl.innerHTML = rawCode.split('\n').map(l => `<div class="px-1 text-slate-300">${l.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') || '&nbsp;'}</div>`).join('');
+                document.getElementById('repairStatusBadge').textContent = "額度耗盡 (已降級)";
                 document.getElementById('repairStatusBadge').className = "text-[10px] px-2 py-0.5 rounded bg-red-500/20 text-red-300 font-mono";
-                feedbackTextEl.value = `【錯誤診斷】：${err.message}\n請檢查右上角 API Key 是否正確。`;
+                document.getElementById('diffFooterHint').textContent = "額度超限，已自動切換為純文字檢視";
+                
+                feedbackTextEl.value = `【提示】：${err.message}\n\n系統已自動切換為「純文字檢視模式」。您可以手動閱讀學生代碼並給予評語，若需恢復 AI 功能，請更換其他專案或帳號的 API Key。`;
             } finally {
                 typingIndicator.classList.add('hidden');
             }
@@ -284,12 +316,12 @@
             if (!p) return;
             problemPromptEl.value = p.prompt;
             studentCodeEl.value = p.student;
-            runAiAnalysis();
+            runAnalysis();
             showToast("已載入預設案例！");
         }
 
         function copyRepairedCode() {
-            execCopy(latestRepairedRawCode || repairedCodeViewEl.textContent, "已複製修復代碼！");
+            execCopy(latestRepairedRawCode || repairedCodeViewEl.textContent, "已複製代碼！");
         }
 
         function copyFeedbackText() {
