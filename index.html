@@ -7,180 +7,91 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        darkBg: '#090d13',
+                        darkBg: '#0b0f17',
                         panelBg: '#121822',
-                        cardBg: '#161e2e',
-                        borderMuted: '#243044',
-                        accentBlue: '#3b82f6',
-                        diffRed: '#3d161a',
-                        diffTextRed: '#f87171'
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'system-ui', 'sans-serif'],
-                        mono: ['"Fira Code"', 'monospace']
+                        borderMuted: '#243044'
                     }
                 }
             }
         }
     </script>
     <style>
-        body {
-            background-color: #0b0f17;
-            color: #e2e8f0;
-            font-family: 'Inter', sans-serif;
-        }
-        pre, code, textarea, .font-mono {
-            font-family: 'Fira Code', monospace;
-        }
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #0f172a;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #27354a;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #3b82f6;
-        }
-        .code-sync {
-            font-family: 'Fira Code', monospace !important;
-            font-size: 13px !important;
-            line-height: 1.6 !important;
-            tab-size: 4 !important;
-            white-space: pre !important;
-        }
-        @media (min-width: 768px) {
-            .code-sync {
-                font-size: 14px !important;
-            }
-        }
+        body { background-color: #0b0f17; color: #e2e8f0; font-family: 'Inter', sans-serif; }
+        pre, code, textarea, .font-mono { font-family: 'Fira Code', monospace; }
+        .code-sync { font-family: 'Fira Code', monospace !important; font-size: 14px !important; line-height: 1.6 !important; tab-size: 4 !important; white-space: pre !important; }
     </style>
 </head>
-<body class="min-h-screen bg-[#0b0f17] text-slate-100 p-3 md:p-6 flex flex-col justify-between relative">
+<body class="min-h-screen bg-[#0b0f17] text-slate-100 p-4 md:p-6 flex flex-col justify-between">
 
-    <!-- 首次登入 API Key 遮罩彈窗 -->
-    <div id="apiKeyModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
-        <div class="bg-[#121822] border border-borderMuted rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
-            <div class="flex items-center space-x-3 border-b border-borderMuted pb-3">
-                <span class="p-2 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 0121 9z"/>
-                    </svg>
-                </span>
-                <div>
-                    <h2 class="text-base font-bold text-white">啟動 AI 批改系統</h2>
-                    <p class="text-xs text-slate-400">請先設定您的 Gemini API 金鑰以繼續</p>
-                </div>
-            </div>
-
-            <p class="text-xs text-slate-300 leading-relaxed">
-                本系統採用 Google Gemini AI 進行「最小修復」診斷。請貼入您的 API Key（儲存後自動記憶在瀏覽器，下次開啟免再輸入）。
-            </p>
-
-            <div class="space-y-1.5">
-                <label class="text-xs text-slate-400 font-medium">Gemini API Key：</label>
-                <input type="text" id="modalApiKeyInput" placeholder="請貼上 AI Studio 取得的 API Key" autocomplete="off"
-                    class="w-full bg-[#090d13] border border-borderMuted rounded-lg px-3 py-2.5 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono">
-            </div>
-
-            <button type="button" id="saveKeyBtn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium py-2.5 rounded-lg text-xs transition shadow-lg shadow-blue-600/20 cursor-pointer">
-                確認並正式開啟工作台
-            </button>
-        </div>
-    </div>
-
-    <!-- 頂部導覽列 -->
+    <!-- 頂部導覽列：API Key 直接內嵌在右上角 -->
     <header class="max-w-7xl mx-auto w-full mb-4">
         <div class="flex flex-wrap items-center justify-between gap-3 border-b border-borderMuted/60 pb-3">
             <div class="flex items-center space-x-3">
                 <span class="p-2 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                 </span>
                 <div>
                     <h1 class="text-base md:text-lg font-bold tracking-tight text-white flex items-center gap-2">
                         Python 程式批改輔助系統
-                        <span class="text-xs px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30 font-mono font-medium">Gemini 3.8 Flash 引擎</span>
+                        <span class="text-xs px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30 font-mono">Gemini 3.8 Flash</span>
                     </h1>
-                    <p class="text-xs text-slate-400">深度解析題目與邏輯・自動糾正算術與符號謬誤・秒速生成評語</p>
+                    <p class="text-xs text-slate-400">動態解析題目・算術與符號糾正・Minimal Repair 最小修復</p>
                 </div>
             </div>
 
-            <div class="flex items-center gap-2 text-xs">
-                <button type="button" id="resetKeyBtn" class="flex items-center gap-2 bg-[#0d131e] hover:bg-[#161e2e] border border-borderMuted px-3 py-1.5 rounded-lg text-slate-300 transition cursor-pointer">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span>API Key 狀態：<span id="keyStatusText" class="text-emerald-400 font-mono">已就緒</span></span>
-                    <span class="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded ml-1">重設</span>
+            <!-- 右上角 API Key 控制區 -->
+            <div class="flex items-center gap-2 bg-[#121822] border border-borderMuted p-1.5 rounded-xl shadow-md">
+                <span class="text-xs text-slate-400 pl-2 font-medium">🔑 API Key:</span>
+                <input type="password" id="apiKeyInput" placeholder="請貼上 API Key..." autocomplete="off"
+                    class="w-40 md:w-56 bg-[#090d13] border border-borderMuted rounded-lg px-2.5 py-1 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono">
+                <button type="button" onclick="saveApiKey()" 
+                    class="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-medium transition cursor-pointer shadow">
+                    儲存
                 </button>
             </div>
         </div>
 
         <div class="flex items-center flex-wrap gap-2 text-xs pt-3">
             <span class="text-slate-400 font-medium">快速載入典型學生錯誤案例：</span>
-            <button type="button" onclick="loadPreset('operator_error')" class="px-2.5 py-1 rounded-md bg-amber-950/60 hover:bg-amber-900/60 text-amber-300 border border-amber-800 transition cursor-pointer">
-                案例 1: 符號誤植 (+ 錯改成 -)
-            </button>
-            <button type="button" onclick="loadPreset('prime_modulo_error')" class="px-2.5 py-1 rounded-md bg-blue-950/60 hover:bg-blue-900/60 text-blue-300 border border-blue-800 transition cursor-pointer">
-                案例 2: 質數判斷 (餘數 == 1)
-            </button>
-            <button type="button" onclick="loadPreset('tree_missing_print')" class="px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition cursor-pointer">
-                案例 3: 聖誕樹 (缺少 print)
-            </button>
+            <button type="button" onclick="loadPreset('operator_error')" class="px-2.5 py-1 rounded-md bg-amber-950/60 text-amber-300 border border-amber-800 cursor-pointer">案例 1: 符號誤植 (+ 改 -)</button>
+            <button type="button" onclick="loadPreset('prime_modulo_error')" class="px-2.5 py-1 rounded-md bg-blue-950/60 text-blue-300 border border-blue-800 cursor-pointer">案例 2: 質數判斷</button>
+            <button type="button" onclick="loadPreset('tree_missing_print')" class="px-2.5 py-1 rounded-md bg-slate-800 text-slate-300 border border-slate-700 cursor-pointer">案例 3: 聖誕樹</button>
         </div>
     </header>
 
     <!-- 主工作區 -->
     <main class="max-w-7xl mx-auto w-full flex-1 flex flex-col gap-4">
 
-        <section class="bg-panelBg/90 border border-borderMuted rounded-xl p-4 shadow-lg backdrop-blur-sm">
-            <div class="flex items-center justify-between mb-2">
-                <label for="problemPrompt" class="text-xs md:text-sm font-semibold text-slate-300 flex items-center gap-2">
-                    <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                    </svg>
-                    題目說明與評量規範 (Problem Prompt):
-                </label>
-                <span class="text-xs text-slate-400">AI 將依據此題目脈絡進行邏輯與算術糾正</span>
-            </div>
+        <section class="bg-panelBg border border-borderMuted rounded-xl p-4 shadow-lg">
+            <label for="problemPrompt" class="text-xs md:text-sm font-semibold text-slate-300 flex items-center gap-2 mb-2">
+                📜 題目說明與評量規範 (Problem Prompt):
+            </label>
             <textarea id="problemPrompt" rows="2" 
-                class="w-full bg-[#0d131e] text-slate-200 border border-borderMuted rounded-lg p-3 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 font-sans resize-none"
+                class="w-full bg-[#0d131e] text-slate-200 border border-borderMuted rounded-lg p-3 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
                 placeholder="輸入題目要求與核心條件...">請撰寫一函式 sum_squares(n)，計算並回傳 1 到 n 所有整數的平方和 (1^2 + 2^2 + ... + n^2)。必須正確累加。</textarea>
         </section>
 
-        <section class="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 min-w-0">
+        <section class="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
             
             <!-- 左欄：學生程式碼編輯器 -->
-            <div class="flex flex-col bg-panelBg/90 border border-borderMuted rounded-xl p-3 md:p-4 shadow-lg backdrop-blur-sm min-w-0">
-                <div class="h-8 flex items-center justify-between mb-2">
-                    <label for="studentCode" class="text-xs md:text-sm font-semibold text-slate-200 flex items-center gap-2 truncate">
-                        <span class="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0"></span>
-                        <span class="truncate">學生程式碼 Student Code (貼上即自動解析):</span>
+            <div class="flex flex-col bg-panelBg border border-borderMuted rounded-xl p-4 shadow-lg">
+                <div class="flex items-center justify-between mb-2">
+                    <label for="studentCode" class="text-xs md:text-sm font-semibold text-slate-200 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-amber-400"></span> 學生程式碼 (貼上即自動解析):
                     </label>
-                    <div class="flex items-center gap-2">
-                        <span id="typingIndicator" class="text-[11px] text-blue-400 font-mono hidden">AI 思考中...</span>
-                        <button type="button" onclick="clearStudentCode()" class="text-xs px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-red-400 border border-slate-700 transition flex items-center gap-1 cursor-pointer">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                            清空
-                        </button>
-                    </div>
+                    <span id="typingIndicator" class="text-[11px] text-blue-400 font-mono hidden">AI 思考中...</span>
                 </div>
-
-                <div class="flex-1 min-h-[260px] md:min-h-[320px] flex">
+                <div class="flex-1 min-h-[280px] flex">
                     <textarea id="studentCode" spellcheck="false"
-                        class="code-sync w-full h-full bg-[#0a0f18] text-slate-200 border border-borderMuted rounded-lg p-3 focus:outline-none focus:ring-1 focus:ring-amber-500/75 resize-none transition"
-                        placeholder="請在此貼上學生提交的 Python 程式碼...">def sum_squares(n):
+                        class="code-sync w-full h-full bg-[#0a0f18] text-slate-200 border border-borderMuted rounded-lg p-3 focus:outline-none focus:ring-1 focus:ring-amber-500 resize-none"
+                        placeholder="請在此貼上學生程式碼...">def sum_squares(n):
     total = 0
     for i in range(1, n + 1):
         total -= i * i  # 學生誤將 + 寫成 -
@@ -189,72 +100,50 @@
             </div>
 
             <!-- 右欄：Minimal Repair 最小修復區 -->
-            <div class="flex flex-col bg-panelBg/90 border border-borderMuted rounded-xl p-3 md:p-4 shadow-lg backdrop-blur-sm min-w-0">
-                <div class="h-8 flex items-center justify-between mb-2">
-                    <div class="flex items-center gap-2 min-w-0">
-                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 shrink-0"></span>
-                        <h2 class="text-xs md:text-sm font-semibold text-slate-200 truncate">
-                            Minimal Repair (最小修復對照)
-                        </h2>
-                        <span id="repairStatusBadge" class="text-[11px] px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 font-mono border border-blue-500/30 shrink-0">準備就緒</span>
+            <div class="flex flex-col bg-panelBg border border-borderMuted rounded-xl p-4 shadow-lg">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                        <h2 class="text-xs md:text-sm font-semibold text-slate-200">Minimal Repair (最小修復對照)</h2>
+                        <span id="repairStatusBadge" class="text-[10px] px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 font-mono">準備就緒</span>
                     </div>
                     
-                    <button type="button" onclick="copyRepairedCode()" id="copyCodeBtn"
-                        class="text-xs px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition flex items-center gap-1 shrink-0 cursor-pointer">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                        </svg>
-                        <span id="copyCodeText">複製修復程式碼</span>
+                    <button type="button" onclick="copyRepairedCode()" class="text-xs px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 cursor-pointer">
+                        📋 複製修復代碼
                     </button>
                 </div>
 
-                <div class="flex-1 min-h-[260px] md:min-h-[320px] flex flex-col justify-between bg-[#0a0f18] border border-borderMuted rounded-lg p-3 overflow-hidden">
+                <div class="flex-1 min-h-[280px] flex flex-col justify-between bg-[#0a0f18] border border-borderMuted rounded-lg p-3 overflow-hidden">
                     <div id="repairedCodeView" class="code-sync text-slate-200 overflow-auto flex-1"></div>
-                    
                     <div class="mt-2 pt-2 border-t border-borderMuted/40 flex items-center justify-between text-[11px] text-slate-500">
-                        <span class="truncate">保留原變數命名與邏輯結構之最小修復</span>
-                        <span id="diffStats" class="font-mono text-slate-400 shrink-0 ml-1">0 處修復</span>
+                        <span>保留原架構之最小修復</span>
+                        <span id="diffStats" class="font-mono text-slate-400">0 處修復</span>
                     </div>
                 </div>
             </div>
 
         </section>
 
-        <section class="bg-panelBg/90 border border-borderMuted rounded-xl p-4 shadow-lg backdrop-blur-sm">
+        <!-- 錯因評語區 -->
+        <section class="bg-panelBg border border-borderMuted rounded-xl p-4 shadow-lg">
             <div class="flex items-center justify-between mb-2">
-                <div class="flex items-center gap-2">
-                    <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                    </svg>
-                    <label for="feedbackText" class="text-xs md:text-sm font-semibold text-slate-200">
-                        白話錯因分析與客觀評語 (助教可一鍵複製貼回教務/成績系統):
-                    </label>
-                </div>
-
-                <button type="button" onclick="copyFeedbackText()" id="copyFeedbackBtn"
-                    class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium shadow-md transition flex items-center gap-1.5 cursor-pointer">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
-                    <span id="copyFeedbackText">一鍵複製評語</span>
+                <label for="feedbackText" class="text-xs md:text-sm font-semibold text-slate-200 flex items-center gap-2">
+                    💬 白話錯因分析與客觀評語 (助教一鍵複製):
+                </label>
+                <button type="button" onclick="copyFeedbackText()" class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium cursor-pointer">
+                    ✨ 一鍵複製評語
                 </button>
             </div>
-
-            <div class="relative">
-                <textarea id="feedbackText" rows="2"
-                    class="w-full bg-[#0d131e] text-amber-200/90 border border-borderMuted rounded-lg p-3 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 font-sans resize-none leading-relaxed transition"
-                    placeholder="分析後將在此自動生成簡明精確的錯因回饋..."></textarea>
-            </div>
+            <textarea id="feedbackText" rows="2"
+                class="w-full bg-[#0d131e] text-amber-200/90 border border-borderMuted rounded-lg p-3 text-sm focus:outline-none resize-none leading-relaxed"
+                placeholder="分析後將在此自動生成精確評語..."></textarea>
         </section>
 
     </main>
 
-    <!-- Toast Notification -->
-    <div id="toast" class="fixed bottom-6 right-6 px-4 py-2.5 rounded-lg bg-emerald-600 text-white text-xs font-medium shadow-xl flex items-center gap-2 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none z-50">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-        </svg>
-        <span id="toastMsg">已複製至剪貼簿！</span>
+    <!-- Toast 提示 -->
+    <div id="toast" class="fixed bottom-6 right-6 px-4 py-2.5 rounded-lg bg-emerald-600 text-white text-xs font-medium shadow-xl transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none z-50">
+        已複製至剪貼簿！
     </div>
 
     <script>
@@ -269,288 +158,162 @@
             },
             tree_missing_print: {
                 prompt: "請用字元 '*' 印出一個 5 層的聖誕樹圖案。",
-                student: `layers = 5  # 定義樹的層數\n\nfor i in range(1, layers + 1):\n    spaces = ' ' * (layers - i)\n    stars = '*' * (2 * i - 1)`
+                student: `layers = 5\n\nfor i in range(1, layers + 1):\n    spaces = ' ' * (layers - i)\n    stars = '*' * (2 * i - 1)`
             }
         };
 
+        const apiKeyInput = document.getElementById('apiKeyInput');
         const studentCodeEl = document.getElementById('studentCode');
         const repairedCodeViewEl = document.getElementById('repairedCodeView');
         const feedbackTextEl = document.getElementById('feedbackText');
         const problemPromptEl = document.getElementById('problemPrompt');
         const typingIndicator = document.getElementById('typingIndicator');
-        const apiKeyModal = document.getElementById('apiKeyModal');
-        const modalApiKeyInput = document.getElementById('modalApiKeyInput');
-        const keyStatusText = document.getElementById('keyStatusText');
-        const saveKeyBtn = document.getElementById('saveKeyBtn');
-        const resetKeyBtn = document.getElementById('resetKeyBtn');
 
         let latestRepairedRawCode = "";
 
-        function handleSaveKey() {
-            const key = modalApiKeyInput.value.trim();
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedKey = localStorage.getItem('gemini_api_key');
+            if (savedKey) {
+                apiKeyInput.value = savedKey;
+                runAiAnalysis();
+            }
+        });
+
+        function saveApiKey() {
+            const key = apiKeyInput.value.trim();
             if (!key) {
-                alert("請填入有效的 Gemini API Key！");
-                modalApiKeyInput.focus();
+                alert("請輸入有效的 API Key！");
+                apiKeyInput.focus();
                 return;
             }
             localStorage.setItem('gemini_api_key', key);
-            apiKeyModal.classList.add('hidden');
-            keyStatusText.textContent = "已就緒";
-            showToast("API Key 已成功儲存！");
+            showToast("API Key 儲存成功！");
             runAiAnalysis();
         }
-
-        saveKeyBtn.addEventListener('click', handleSaveKey);
-        
-        modalApiKeyInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                handleSaveKey();
-            }
-        });
-
-        resetKeyBtn.addEventListener('click', () => {
-            modalApiKeyInput.value = localStorage.getItem('gemini_api_key') || "";
-            apiKeyModal.classList.remove('hidden');
-            modalApiKeyInput.focus();
-        });
-
-        window.addEventListener('DOMContentLoaded', () => {
-            const savedKey = localStorage.getItem('gemini_api_key');
-            if (savedKey && savedKey.length > 5) {
-                apiKeyModal.classList.add('hidden');
-                keyStatusText.textContent = "已就緒";
-                runAiAnalysis();
-            } else {
-                apiKeyModal.classList.remove('hidden');
-                modalApiKeyInput.focus();
-            }
-        });
 
         let debounceTimer;
         studentCodeEl.addEventListener('input', () => {
             typingIndicator.classList.remove('hidden');
             clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => {
-                runAiAnalysis();
-            }, 600);
+            debounceTimer = setTimeout(() => runAiAnalysis(), 600);
         });
 
         async function runAiAnalysis() {
-            const apiKey = localStorage.getItem('gemini_api_key');
+            const apiKey = localStorage.getItem('gemini_api_key') || apiKeyInput.value.trim();
             if (!apiKey) {
-                apiKeyModal.classList.remove('hidden');
-                modalApiKeyInput.focus();
+                repairedCodeViewEl.innerHTML = '<span class="text-amber-400"># 請先在右上角輸入並儲存 Gemini API Key...</span>';
                 return;
             }
 
             const rawCode = studentCodeEl.value;
-            const trimmed = rawCode.trim();
-            const promptText = problemPromptEl ? problemPromptEl.value : "";
-
-            if (!trimmed) {
+            if (!rawCode.trim()) {
                 latestRepairedRawCode = "";
-                repairedCodeViewEl.innerHTML = '<span class="text-slate-500"># 請在左側輸入學生作答代碼...</span>';
+                repairedCodeViewEl.innerHTML = '<span class="text-slate-500"># 請輸入學生代碼...</span>';
                 feedbackTextEl.value = "尚未輸入代碼。";
-                updateStatusBadge("待輸入", "text-[11px] px-2 py-0.5 rounded bg-slate-800 text-slate-400 font-mono border border-slate-700");
-                document.getElementById('diffStats').textContent = "0 處修復";
                 typingIndicator.classList.add('hidden');
                 return;
             }
 
-            updateStatusBadge("AI 閱讀分析中...", "text-[11px] px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 font-mono border border-blue-500/30 animate-pulse");
+            document.getElementById('repairStatusBadge').textContent = "AI 閱讀中...";
+            document.getElementById('repairStatusBadge').className = "text-[10px] px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 font-mono animate-pulse";
 
             try {
-                const result = await callGeminiEngine(apiKey, promptText, rawCode);
-                applyRepairResult(result.repairedCode, result.status, result.stats, result.feedback);
-            } catch (err) {
-                console.error("AI 檢測錯誤詳情:", err);
-                updateStatusBadge("API 請求失敗", "text-[11px] px-2 py-0.5 rounded bg-red-500/20 text-red-300 font-mono border border-red-500/30");
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
+                const systemPrompt = `你是一位專業且精準的 Python 助教。請針對學生的程式碼與題目規範執行「最小修復（Minimal Repair）」：
+1. 找出邏輯、算術符號（如 + 寫成 -）或語法錯誤並修正。
+2. 保留原變數名稱與架構。
+3. 嚴格以純 JSON 格式回傳（無 markdown），包含四個欄位：
+- "repairedCode": 修復後的完整 Python 程式碼。
+- "status": 狀態標籤（例如 "運算符號誤植 (-3分)"）。
+- "stats": 修改統計（例如 "將 -= 改為 += (1 處修復)"）。
+- "feedback": 繁體中文白話錯因評語。`;
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ role: "user", parts: [{ text: `【題目】：\n${problemPrompt.value}\n\n【學生代碼】：\n${rawCode}` }] }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] },
+                        generationConfig: { temperature: 0.1 }
+                    })
+                });
+
+                if (!response.ok) {
+                    const errJson = await response.json().catch(() => ({}));
+                    throw new Error(errJson.error?.message || `HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+                let text = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+                text = text.replace(/^```json/, "").replace(/^```/, "").replace(/```$/, "").trim();
                 
-                let errorDetails = err.message || "未知錯誤";
-                feedbackTextEl.value = `【API 錯誤診斷】：${errorDetails}。\n建議檢查項目：\n1. API Key 是否正確或已過期。\n2. 網路連線是否正常。`;
+                const result = JSON.parse(text);
+                latestRepairedRawCode = result.repairedCode;
+                renderDiff(rawCode, result.repairedCode);
+                feedbackTextEl.value = result.feedback;
+                document.getElementById('diffStats').textContent = result.stats;
+                document.getElementById('repairStatusBadge').textContent = result.status;
+                document.getElementById('repairStatusBadge').className = "text-[10px] px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono";
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById('repairStatusBadge').textContent = "呼叫失敗";
+                document.getElementById('repairStatusBadge').className = "text-[10px] px-2 py-0.5 rounded bg-red-500/20 text-red-300 font-mono";
+                feedbackTextEl.value = `【錯誤診斷】：${err.message}\n請檢查右上角 API Key 是否正確。`;
             } finally {
                 typingIndicator.classList.add('hidden');
             }
         }
 
-        async function callGeminiEngine(apiKey, problemPrompt, studentCode) {
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
-
-            const systemPrompt = `你是一位專業且極度精準的 Python 程式設計課助教。
-請根據「題目要求與規範」閱讀學生的程式碼，並執行「最小修復（Minimal Repair）」：
-1. 嚴格理解題意，找出任何邏輯、算術符號（如將 + 誤寫成 -）或語法錯誤並加以修正。
-2. 絕對保留學生原本的變數名稱與程式架構，只做最小幅度的必要修改。
-3. 必須嚴格以純 JSON 格式回傳（不可包覆在 markdown ```json 程式碼區塊中，直接輸出純 JSON 文字），包含以下四個欄位：
-- "repairedCode": 修復後的完整 Python 程式碼字串。
-- "status": 簡短扣分或狀態標籤（例如 "運算符號誤植 (-3分)"）。
-- "stats": 修改幅度統計（例如 "將 -= 改為 += (1 處修復)"）。
-- "feedback": 白話繁體中文錯因評語。`;
-
-            const userPrompt = `【題目要求與規範】：
-${problemPrompt}
-
-【學生提交的原始程式碼】：
-${studentCode}`;
-
-            const payload = {
-                contents: [{ role: "user", parts: [{ text: userPrompt }] }],
-                systemInstruction: { parts: [{ text: systemPrompt }] },
-                generationConfig: {
-                    temperature: 0.1
+        function renderDiff(orig, rep) {
+            const oLines = orig.split('\n');
+            const rLines = rep.split('\n');
+            const html = rLines.map((line, idx) => {
+                const esc = line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') || '&nbsp;';
+                const isDiff = !oLines[idx] || oLines[idx].trimEnd() !== line.trimEnd();
+                if (isDiff) {
+                    return `<div class="bg-[#3d161a]/90 text-[#f87171] font-semibold px-1 border-l-2 border-red-500">${esc}</div>`;
                 }
-            };
-
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                return `<div class="px-1 text-slate-300">${esc}</div>`;
             });
-
-            if (!response.ok) {
-                let errorBody = "";
-                try {
-                    const errJson = await response.json();
-                    errorBody = errJson.error?.message || JSON.stringify(errJson);
-                } catch(e) {
-                    errorBody = await response.text();
-                }
-                throw new Error(`HTTP ${response.status} - ${errorBody}`);
-            }
-
-            const data = await response.json();
-            const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
-            
-            let cleanJson = text.trim();
-            if (cleanJson.startsWith("```json")) {
-                cleanJson = cleanJson.replace(/^```json/, "").replace(/```$/, "").trim();
-            } else if (cleanJson.startsWith("```")) {
-                cleanJson = cleanJson.replace(/^```/, "").replace(/```$/, "").trim();
-            }
-
-            return JSON.parse(cleanJson);
+            repairedCodeViewEl.innerHTML = html.join('');
         }
 
-        function renderDiffHighlight(originalCode, repairedCode) {
-            const origLines = originalCode.split('\n');
-            const repLines = repairedCode.split('\n');
-
-            const m = origLines.length;
-            const n = repLines.length;
-            const dp = Array.from({ length: m + 1 }, () => new Uint16Array(n + 1));
-
-            for (let i = 0; i < m; i++) {
-                for (let j = 0; j < n; j++) {
-                    if (origLines[i].trimEnd() === repLines[j].trimEnd()) {
-                        dp[i + 1][j + 1] = dp[i][j] + 1;
-                    } else {
-                        dp[i + 1][j + 1] = Math.max(dp[i + 1][j], dp[i][j + 1]);
-                    }
-                }
-            }
-
-            let i = m, j = n;
-            const isRepairedLineModified = new Array(n).fill(true);
-
-            while (i > 0 && j > 0) {
-                if (origLines[i - 1].trimEnd() === repLines[j - 1].trimEnd()) {
-                    isRepairedLineModified[j - 1] = false;
-                    i--;
-                    j--;
-                } else if (dp[i - 1][j] >= dp[i][j - 1]) {
-                    i--;
-                } else {
-                    j--;
-                }
-            }
-
-            const htmlLines = repLines.map((line, idx) => {
-                const escapedLine = line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') || '&nbsp;';
-                if (isRepairedLineModified[idx]) {
-                    return `<div class="bg-[#3d161a]/90 text-[#f87171] font-semibold px-1 rounded-sm border-l-2 border-red-500">${escapedLine}</div>`;
-                } else {
-                    return `<div class="px-1 text-slate-300">${escapedLine}</div>`;
-                }
-            });
-
-            repairedCodeViewEl.innerHTML = htmlLines.join('');
-        }
-
-        function updateStatusBadge(statusText, className) {
-            const badge = document.getElementById('repairStatusBadge');
-            if (badge) {
-                badge.textContent = statusText;
-                if (className) badge.className = className;
-            }
-        }
-
-        function applyRepairResult(repairedCode, statusBadge, statsText, feedbackText) {
-            latestRepairedRawCode = repairedCode;
-            renderDiffHighlight(studentCodeEl.value, repairedCode);
-            feedbackTextEl.value = feedbackText;
-            document.getElementById('diffStats').textContent = statsText;
-
-            let badgeClass = "text-[11px] px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 font-mono border border-blue-500/30 shrink-0";
-            if (statusBadge.includes('滿分') || statusBadge.includes('正確')) {
-                badgeClass = "text-[11px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono border border-emerald-500/30 shrink-0";
-            } else if (statusBadge.includes('-') || statusBadge.includes('誤') || statusBadge.includes('錯')) {
-                badgeClass = "text-[11px] px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono border border-amber-500/30 shrink-0";
-            }
-            updateStatusBadge(statusBadge, badgeClass);
-        }
-
-        function loadPreset(presetKey) {
-            const p = PRESETS[presetKey];
+        function loadPreset(key) {
+            const p = PRESETS[key];
             if (!p) return;
-            if (p.prompt && problemPromptEl) problemPromptEl.value = p.prompt;
+            problemPromptEl.value = p.prompt;
             studentCodeEl.value = p.student;
             runAiAnalysis();
             showToast("已載入預設案例！");
         }
 
-        function clearStudentCode() {
-            studentCodeEl.value = "";
-            runAiAnalysis();
-            studentCodeEl.focus();
-        }
-
         function copyRepairedCode() {
-            executeCopy(latestRepairedRawCode || repairedCodeViewEl.textContent, "已複製修復程式碼！");
-            const btnText = document.getElementById('copyCodeText');
-            btnText.textContent = "已複製！";
-            setTimeout(() => { btnText.textContent = "複製修復程式碼"; }, 1500);
+            execCopy(latestRepairedRawCode || repairedCodeViewEl.textContent, "已複製修復代碼！");
         }
 
         function copyFeedbackText() {
-            executeCopy(feedbackTextEl.value, "已複製學生錯因評語！");
-            const btnText = document.getElementById('copyFeedbackText');
-            btnText.textContent = "已複製評語！";
-            setTimeout(() => { btnText.textContent = "一鍵複製評語"; }, 1500);
+            execCopy(feedbackTextEl.value, "已複製學生評語！");
         }
 
-        function executeCopy(text, toastMessage) {
-            try {
-                const textarea = document.createElement('textarea');
-                textarea.value = text;
-                textarea.style.position = 'fixed';
-                textarea.style.opacity = '0';
-                document.body.appendChild(textarea);
-                textarea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textarea);
-                showToast(toastMessage);
-            } catch (err) {
-                console.error("Copy failed", err);
-            }
+        function execCopy(text, msg) {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            showToast(msg);
         }
 
         function showToast(msg) {
-            const toast = document.getElementById('toast');
-            document.getElementById('toastMsg').textContent = msg;
-            toast.classList.remove('translate-y-20', 'opacity-0');
-            toast.classList.add('translate-y-0', 'opacity-100');
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.remove('translate-y-20', 'opacity-0');
+            t.classList.add('translate-y-0', 'opacity-100');
             setTimeout(() => {
-                toast.classList.remove('translate-y-0', 'opacity-100');
-                toast.classList.add('translate-y-20', 'opacity-0');
+                t.classList.remove('translate-y-0', 'opacity-100');
+                t.classList.add('translate-y-20', 'opacity-0');
             }, 1800);
         }
     </script>
