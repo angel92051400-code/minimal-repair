@@ -40,9 +40,9 @@
                 <div>
                     <h1 class="text-base md:text-lg font-bold tracking-tight text-white flex items-center gap-2">
                         Python 程式批改輔助系統
-                        <span id="engineBadge" class="text-xs px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 font-mono">內建智慧規則引擎</span>
+                        <span id="engineBadge" class="text-xs px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 font-mono">秒速規則引擎</span>
                     </h1>
-                    <p class="text-xs text-slate-400">動態解析題目・算術與符號糾正・Minimal Repair 最小修復</p>
+                    <p class="text-xs text-slate-400">極速響應・算術與符號糾正・Minimal Repair 最小修復</p>
                 </div>
             </div>
 
@@ -84,9 +84,9 @@
             <div class="flex flex-col bg-panelBg border border-borderMuted rounded-xl p-4 shadow-lg">
                 <div class="flex items-center justify-between mb-2">
                     <label for="studentCode" class="text-xs md:text-sm font-semibold text-slate-200 flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full bg-amber-400"></span> 學生程式碼 (貼上即自動解析):
+                        <span class="w-2 h-2 rounded-full bg-amber-400"></span> 學生程式碼 (貼上即秒速解析):
                     </label>
-                    <span id="typingIndicator" class="text-[11px] text-blue-400 font-mono hidden">處理中...</span>
+                    <span id="typingIndicator" class="text-[11px] text-blue-400 font-mono hidden">AI 背景載入中...</span>
                 </div>
                 <div class="flex-1 min-h-[280px] flex">
                     <textarea id="studentCode" spellcheck="false"
@@ -105,7 +105,7 @@
                     <div class="flex items-center gap-2">
                         <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
                         <h2 class="text-xs md:text-sm font-semibold text-slate-200">Minimal Repair (最小修復對照)</h2>
-                        <span id="repairStatusBadge" class="text-[10px] px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono">規則引擎就緒</span>
+                        <span id="repairStatusBadge" class="text-[10px] px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono">即時就緒</span>
                     </div>
                     
                     <button type="button" onclick="copyRepairedCode()" class="text-xs px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 cursor-pointer">
@@ -116,7 +116,7 @@
                 <div class="flex-1 min-h-[280px] flex flex-col justify-between bg-[#0a0f18] border border-borderMuted rounded-lg p-3 overflow-hidden">
                     <div id="repairedCodeView" class="code-sync text-slate-200 overflow-auto flex-1"></div>
                     <div class="mt-2 pt-2 border-t border-borderMuted/40 flex items-center justify-between text-[11px] text-slate-500">
-                        <span id="diffFooterHint">內建規則最小修復比對</span>
+                        <span id="diffFooterHint">極速比對中</span>
                         <span id="diffStats" class="font-mono text-slate-400">0 處修復</span>
                     </div>
                 </div>
@@ -177,121 +177,50 @@
             if (savedKey) {
                 apiKeyInput.value = savedKey;
             }
-            runAnalysis();
+            runInstantAnalysis();
         });
 
         function saveApiKey() {
             const key = apiKeyInput.value.trim();
             if (key) {
                 localStorage.setItem('gemini_api_key', key);
-                showToast("API Key 儲存成功！將優先使用 Gemini AI");
+                showToast("API Key 儲存成功！將在背景啟用 AI");
             } else {
                 localStorage.removeItem('gemini_api_key');
-                showToast("已切換為內建智慧規則引擎");
+                showToast("已切換為秒速內建規則引擎");
             }
-            runAnalysis();
+            runInstantAnalysis();
         }
 
-        let debounceTimer;
-        studentCodeEl.addEventListener('input', () => {
-            typingIndicator.classList.remove('hidden');
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => runAnalysis(), 400);
-        });
+        // 零延遲即時觸發
+        studentCodeEl.addEventListener('input', () => runInstantAnalysis());
+        problemPromptEl.addEventListener('input', () => runInstantAnalysis());
 
-        problemPromptEl.addEventListener('input', () => {
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => runAnalysis(), 400);
-        });
-
-        async function runAnalysis() {
-            const apiKey = localStorage.getItem('gemini_api_key') || apiKeyInput.value.trim();
+        function runInstantAnalysis() {
             const rawCode = studentCodeEl.value;
-
             if (!rawCode.trim()) {
                 latestRepairedRawCode = "";
                 repairedCodeViewEl.innerHTML = '<span class="text-slate-500"># 請輸入學生代碼...</span>';
                 feedbackTextEl.value = "尚未輸入代碼。";
-                typingIndicator.classList.add('hidden');
                 return;
             }
 
-            // 如果沒有填 API Key，直接使用內建智慧規則引擎
-            if (!apiKey) {
-                engineBadge.textContent = "內建智慧規則引擎";
-                engineBadge.className = "text-xs px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 font-mono";
-                runRuleBasedAnalysis(rawCode);
-                typingIndicator.classList.add('hidden');
-                return;
-            }
+            // 1. 0秒瞬間完成本地規則分析，確保畫面零延遲
+            runRuleBasedAnalysis(rawCode);
 
-            // 有 API Key，嘗試呼叫 AI
-            engineBadge.textContent = "Gemini AI 引擎";
-            engineBadge.className = "text-xs px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30 font-mono";
-            document.getElementById('repairStatusBadge').textContent = "AI 閱讀中...";
-            document.getElementById('repairStatusBadge').className = "text-[10px] px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 font-mono animate-pulse";
-
-            try {
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
-                const systemPrompt = `你是一位專業且精準的 Python 助教。請針對學生的程式碼與題目規範執行「最小修復（Minimal Repair）」：
-1. 找出邏輯、算術符號（如 + 寫成 -）或語法錯誤並修正。
-2. 保留原變數名稱與架構。
-3. 嚴格以純 JSON 格式回傳（無 markdown），包含四個欄位：
-- "repairedCode": 修復後的完整 Python 程式碼。
-- "status": 狀態標籤（例如 "運算符號誤植 (-3分)"）。
-- "stats": 修改統計（例如 "將 -= 改為 += (1 處修復)"）。
-- "feedback": 繁體中文白話錯因評語。`;
-
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ role: "user", parts: [{ text: `【題目】：\n${problemPromptEl.value}\n\n【學生代碼】：\n${rawCode}` }] }],
-                        systemInstruction: { parts: [{ text: systemPrompt }] },
-                        generationConfig: { temperature: 0.1 }
-                    })
-                });
-
-                if (!response.ok) {
-                    const errJson = await response.json().catch(() => ({}));
-                    const errMsg = errJson.error?.message || `HTTP ${response.status}`;
-                    if (errMsg.includes("Quota exceeded") || errMsg.includes("rate limit")) {
-                        throw new Error("API 額度已達上限（Quota Exceeded），已自動切換回內建智慧規則引擎。");
-                    }
-                    throw new Error(errMsg);
-                }
-
-                const data = await response.json();
-                let text = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
-                text = text.replace(/^```json/, "").replace(/^```/, "").replace(/```$/, "").trim();
-                
-                const result = JSON.parse(text);
-                latestRepairedRawCode = result.repairedCode;
-                renderDiff(rawCode, result.repairedCode);
-                feedbackTextEl.value = result.feedback;
-                document.getElementById('diffStats').textContent = result.stats;
-                document.getElementById('diffFooterHint').textContent = "保留原架構之最小修復 (AI)";
-                document.getElementById('repairStatusBadge').textContent = result.status;
-                document.getElementById('repairStatusBadge').className = "text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono";
-
-            } catch (err) {
-                console.warn("AI 呼叫失敗，自動降級為內建規則引擎:", err.message);
-                // 額度超限時自動切換回規則引擎
-                runRuleBasedAnalysis(rawCode);
-                document.getElementById('repairStatusBadge').textContent = "額度耗盡 (規則降級)";
-                document.getElementById('repairStatusBadge').className = "text-[10px] px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono";
-                feedbackTextEl.value = `【提示】：${err.message}\n\n（已自動切換為內建智慧規則引擎）：\n${feedbackTextEl.value}`;
-            } finally {
-                typingIndicator.classList.add('hidden');
+            // 2. 如果有填 API Key，非同步在背景呼叫 AI 進行深度修正
+            const apiKey = localStorage.getItem('gemini_api_key') || apiKeyInput.value.trim();
+            if (apiKey) {
+                runBackgroundAI(apiKey, rawCode);
             }
         }
 
-        // 內建智慧規則引擎（當無 API Key 或額度耗盡時自動生效）
+        // 內建智慧規則引擎（0秒極速反應）
         function runRuleBasedAnalysis(rawCode) {
             let repaired = rawCode;
-            let status = "邏輯正常 (0分)";
-            let stats = "無須修改";
-            let feedback = "經內建規則檢測，代碼結構符合基本規範，邏輯運算大致正確。";
+            let status = "規則就緒";
+            let stats = "比對正常";
+            let feedback = "代碼結構符合基本規範，邏輯運算大致正常。";
 
             if (rawCode.includes("total -= i") || rawCode.includes("total = total -")) {
                 repaired = rawCode.replace("-=", "+=").replace("total -", "total +");
@@ -314,9 +243,55 @@
             renderDiff(rawCode, repaired);
             feedbackTextEl.value = feedback;
             document.getElementById('diffStats').textContent = stats;
-            document.getElementById('diffFooterHint').textContent = "內建智慧規則最小修復";
             document.getElementById('repairStatusBadge').textContent = status;
-            document.getElementById('repairStatusBadge').className = "text-[10px] px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono";
+        }
+
+        // 背景非同步 AI 呼叫（不卡畫面操作）
+        async function runBackgroundAI(apiKey, rawCode) {
+            engineBadge.textContent = "Gemini AI (背景同步)";
+            engineBadge.className = "text-xs px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30 font-mono";
+            typingIndicator.classList.remove('hidden');
+
+            try {
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
+                const systemPrompt = `你是一位專業且精準的 Python 助教。請針對學生的程式碼與題目規範執行「最小修復（Minimal Repair）」：
+1. 找出邏輯、算術符號（如 + 寫成 -）或語法錯誤並修正。
+2. 保留原變數名稱與架構。
+3. 嚴格以純 JSON 格式回傳（無 markdown），包含四個欄位：
+- "repairedCode": 修復後的完整 Python 程式碼。
+- "status": 狀態標籤（例如 "運算符號誤植 (-3分)"）。
+- "stats": 修改統計（例如 "將 -= 改為 += (1 處修復)"）。
+- "feedback": 繁體中文白話錯因評語。`;
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ role: "user", parts: [{ text: `【題目】：\n${problemPromptEl.value}\n\n【學生代碼】：\n${rawCode}` }] }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] },
+                        generationConfig: { temperature: 0.1 }
+                    })
+                });
+
+                if (!response.ok) return; // 失敗時靜默保持內建規則結果，不干擾助教操作
+
+                const data = await response.json();
+                let text = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+                text = text.replace(/^```json/, "").replace(/^```/, "").replace(/```$/, "").trim();
+                
+                const result = JSON.parse(text);
+                latestRepairedRawCode = result.repairedCode;
+                renderDiff(rawCode, result.repairedCode);
+                feedbackTextEl.value = result.feedback;
+                document.getElementById('diffStats').textContent = result.stats;
+                document.getElementById('repairStatusBadge').textContent = result.status;
+                document.getElementById('repairStatusBadge').className = "text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono";
+
+            } catch (err) {
+                // 靜默略過背景錯誤，維持極速流暢
+            } finally {
+                typingIndicator.classList.add('hidden');
+            }
         }
 
         function renderDiff(orig, rep) {
@@ -338,7 +313,7 @@
             if (!p) return;
             problemPromptEl.value = p.prompt;
             studentCodeEl.value = p.student;
-            runAnalysis();
+            runInstantAnalysis();
             showToast("已載入預設案例！");
         }
 
